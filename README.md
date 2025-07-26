@@ -15,49 +15,44 @@ Track team activity, workflows, or approvals using simple emoji reactions in Sla
 - Testable connection to both Slack and Google Sheets APIs
 
 ## High Level Architecture
-┌────────────────────┐
-│  Slack Channel      │
-│  (monitored)        │
-└────────┬───────────┘
-         │ Emoji Reaction
-         ▼
-┌────────────────────┐
-│  Slack API (async) │
-│  • fetch messages  │
-│  • get reactions   │
-│  • get user info   │
-└────────┬───────────┘
-         │
-         ▼
-┌────────────────────────────┐
-│  Trigger Check + Filtering │
-│  • emoji match (form, etc) │
-│  • thread replies          │
-│  • generate permalink      │
-└────────┬───────────────────┘
-         │
-         ▼
-┌────────────────────────────┐
-│     State Manager          │
-│  • hash message ID         │
-│  • skip if already seen    │
-│  • update state.json       │
-└────────┬───────────────────┘
-         │
-         ▼
-┌────────────────────────────┐
-│  Google Sheets API Client  │
-│  • authenticate with creds │
-│  • write new rows to sheet │
-│  • add headers if needed   │
-└────────┬───────────────────┘
-         │
-         ▼
-┌────────────────────────────┐
-│        Google Sheet        │
-│     Sheet2 tab in doc      │
-│  (logs emoji-triggered msgs│
-└────────────────────────────┘
+          ┌─────────────────────┐
+          │    Slack Channel    │
+          │ (Monitored Messages)│
+          └─────────┬───────────┘
+                    │
+                    ▼
+          ┌─────────────────────┐
+          │   Slack API (Async) │
+          │  - Fetch messages   │
+          │  - Fetch reactions  │
+          │  - Get user info    │
+          └─────────┬───────────┘
+                    │
+     ┌──────────────┴───────────────┐
+     │    SlackSheetsMonitor Class  │
+     │ ──────────────────────────── │
+     │  - Filter by trigger emoji   │
+     │  - Fetch thread replies      │
+     │  - Generate permalinks       │
+     │  - Deduplicate messages      │
+     │  - Format message metadata   │
+     │  - Save state to disk        │
+     └──────────────┬───────────────┘
+                    │
+                    ▼
+          ┌──────────────────────┐
+          │ Google Sheets API    │
+          │ - Auth via service   │
+          │   account JSON       │
+          │ - Append new rows    │
+          └─────────┬────────────┘
+                    │
+                    ▼
+          ┌──────────────────────┐
+          │  Google Sheet (Tab)  │
+          │  - Logs Slack events │
+          └──────────────────────┘
+
 
 ## Logical Components
 
